@@ -1,10 +1,11 @@
 "use strict";
 
 const jwt = require("jsonwebtoken");
-const { UnauthorizedError } = require("../expressError");
+const { ExpressError, UnauthorizedError } = require("../expressError");
 const {
   authenticateJWT,
   ensureLoggedIn,
+  requireAdmin
 } = require("./auth");
 
 
@@ -78,3 +79,16 @@ describe("ensureLoggedIn", function () {
     ensureLoggedIn(req, res, next);
   });
 });
+
+describe('requireAdmin', () => {
+  test("works", function () {
+    expect.assertions(1);
+    const req = {};
+    const res = { locals: { user: { username: "test", is_admin: false } } };
+    const next = function (err) {
+      expect(err.message).toContain("Unauthorized");
+    };
+    requireAdmin(req, res, next);
+  });
+});
+

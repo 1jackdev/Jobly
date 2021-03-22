@@ -42,8 +42,22 @@ function ensureLoggedIn(req, res, next) {
   }
 }
 
+/** Authorization Middleware: Requires user is logged in and is staff. */
+
+function requireAdmin(req, res, next) {
+  try {
+    if (res.locals.user.isAdmin) {
+      return next();
+    } else {
+      return next({ status: 401, message: "Unauthorized" });
+    }
+  } catch (err) {
+    return next(err);
+  }
+}
 
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
+  requireAdmin
 };

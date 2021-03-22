@@ -5,8 +5,8 @@
 const jsonschema = require("jsonschema");
 
 const express = require("express");
-const { ensureLoggedIn } = require("../middleware/auth");
-const { BadRequestError } = require("../expressError");
+const { ensureLoggedIn, requireAdmin } = require("../middleware/auth");
+const { ExpressError,BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
@@ -27,7 +27,7 @@ const router = express.Router();
  * Authorization required: login
  **/
 
-router.post("/", ensureLoggedIn, async function (req, res, next) {
+router.post("/", ensureLoggedIn, requireAdmin, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userNewSchema);
     if (!validator.valid) {
@@ -51,7 +51,7 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  * Authorization required: login
  **/
 
-router.get("/", ensureLoggedIn, async function (req, res, next) {
+router.get("/", ensureLoggedIn, requireAdmin, async function (req, res, next) {
   try {
     const users = await User.findAll();
     return res.json({ users });
@@ -70,6 +70,9 @@ router.get("/", ensureLoggedIn, async function (req, res, next) {
 
 router.get("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
+    if (!res.locals.user.isAdmin && res.locals.user.username !== req.params.username) {
+      throw new ExpressError("Only that user or admin can edit a user.", 401);
+    }
     const user = await User.get(req.params.username);
     return res.json({ user });
   } catch (err) {
@@ -90,6 +93,9 @@ router.get("/:username", ensureLoggedIn, async function (req, res, next) {
 
 router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
+    if (!res.locals.user.isAdmin && res.locals.user.username !== req.params.username) {
+      throw new ExpressError("Only that user or admin can edit a user.", 401);
+    }
     const validator = jsonschema.validate(req.body, userUpdateSchema);
     if (!validator.valid) {
       const errs = validator.errors.map(e => e.stack);
@@ -111,6 +117,9 @@ router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
 
 router.delete("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
+    if (!res.locals.user.isAdmin && res.locals.user.username !== req.params.username) {
+      throw new ExpressError("Only that user or admin can edit a user.", 401);
+    }
     await User.remove(req.params.username);
     return res.json({ deleted: req.params.username });
   } catch (err) {

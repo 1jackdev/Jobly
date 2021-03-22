@@ -1,7 +1,7 @@
 const { BadRequestError } = require("../expressError");
 const { sqlForPartialUpdate, sqlForQueryFilters } = require("./sql");
 
-describe("turn input into sql-friendly string", () => {
+describe("turn input into sql-friendly update string", () => {
   // update query tests
   test("should handle good input", () => {
     const input = { firstName: "jimmy", lastName: "james" };
@@ -31,7 +31,9 @@ describe("turn input into sql-friendly string", () => {
       expect(err instanceof BadRequestError).toBeTruthy();
     }
   });
+});
 
+describe("turn input into sql-friendly where string", () => {
   // filter query tests
   test("should handle 1 filter", () => {
     const input = { name: "bro" };
@@ -45,15 +47,15 @@ describe("turn input into sql-friendly string", () => {
       "LOWER(name) LIKE '%bro%' AND num_employees > 100"
     );
   });
-  test('should handle bad filters', () => {
+  test("should handle bad filters", () => {
     const input = { potatoes: 50, minEmployees: 100 };
     try {
       const results = sqlForQueryFilters(input);
     } catch (err) {
       expect(err.message).toContain("Invalid Filter potatoes");
     }
-  })
-  
+  });
+
   test("should throw error if min > max", () => {
     const input = { maxEmployees: 50, minEmployees: 100 };
     try {
