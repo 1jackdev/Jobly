@@ -14,7 +14,7 @@ const companyUpdateSchema = require("../schemas/companyUpdate.json");
 
 const router = new express.Router();
 
-/** POST / { company } =>  { company }
+/** POST / { companies } =>  { company }
  *
  * company should be { handle, name, description, numEmployees, logoUrl }
  *
