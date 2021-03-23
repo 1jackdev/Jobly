@@ -2,7 +2,10 @@
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate, sqlForCompanyQueryFilters } = require("../helpers/sql");
+const {
+  sqlForPartialUpdate,
+  sqlForCompanyQueryFilters,
+} = require("../helpers/sql");
 
 /** Related functions for companies. */
 
@@ -93,10 +96,10 @@ class Company {
               c.description,
               c.num_employees AS "numEmployees",
               c.logo_url AS "logoUrl"
-           FROM jobs AS j
-           JOIN companies AS c
-           ON j.company_handle = c.handle
-           WHERE j.company_handle = $1`,
+           FROM companies AS c
+           LEFT JOIN jobs AS j
+           ON c.handle = j.company_handle
+           WHERE c.handle = $1`,
       [handle]
     );
 
@@ -104,15 +107,20 @@ class Company {
 
     if (!c) throw new NotFoundError(`No company: ${handle}`);
 
-    const jobs = companyRes.rows.map((job) => ({
-      id: job.id,
-      salary: job.salary,
-      equity: job.equity,
-      companyHandle: job.companyHandle,
-    }));
+    let jobs = [];
+
+    // if the company has jobs, add them to the object
+    if (c.id !== null) {
+      jobs = companyRes.rows.map((job) => ({
+        id: job.id,
+        salary: job.salary,
+        equity: job.equity,
+        companyHandle: job.companyHandle,
+      }));
+    }
 
     return {
-      id: c.id,
+      handle: c.handle,
       name: c.name,
       description: c.description,
       numEmployees: c.numEmployees,

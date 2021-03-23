@@ -6,14 +6,13 @@ const jsonschema = require("jsonschema");
 
 const express = require("express");
 const { ensureLoggedIn, requireAdmin } = require("../middleware/auth");
-const { ExpressError,BadRequestError } = require("../expressError");
+const { ExpressError, BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
 
 const router = express.Router();
-
 
 /** POST / { user }  => { user, token }
  *
@@ -31,7 +30,7 @@ router.post("/", ensureLoggedIn, requireAdmin, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userNewSchema);
     if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
+      const errs = validator.errors.map((e) => e.stack);
       throw new BadRequestError(errs);
     }
 
@@ -42,7 +41,6 @@ router.post("/", ensureLoggedIn, requireAdmin, async function (req, res, next) {
     return next(err);
   }
 });
-
 
 /** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
  *
@@ -60,7 +58,6 @@ router.get("/", ensureLoggedIn, requireAdmin, async function (req, res, next) {
   }
 });
 
-
 /** GET /[username] => { user }
  *
  * Returns { username, firstName, lastName, isAdmin }
@@ -70,8 +67,14 @@ router.get("/", ensureLoggedIn, requireAdmin, async function (req, res, next) {
 
 router.get("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    if (!res.locals.user.isAdmin && res.locals.user.username !== req.params.username) {
-      throw new ExpressError("Only that user or admin can edit a user.", 401);
+    if (
+      !res.locals.user.isAdmin &&
+      res.locals.user.username !== req.params.username
+    ) {
+      throw new ExpressError(
+        "Only that user or admin can see a users details.",
+        401
+      );
     }
     const user = await User.get(req.params.username);
     return res.json({ user });
@@ -79,7 +82,6 @@ router.get("/:username", ensureLoggedIn, async function (req, res, next) {
     return next(err);
   }
 });
-
 
 /** PATCH /[username] { user } => { user }
  *
@@ -93,12 +95,15 @@ router.get("/:username", ensureLoggedIn, async function (req, res, next) {
 
 router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    if (!res.locals.user.isAdmin && res.locals.user.username !== req.params.username) {
+    if (
+      !res.locals.user.isAdmin &&
+      res.locals.user.username !== req.params.username
+    ) {
       throw new ExpressError("Only that user or admin can edit a user.", 401);
     }
     const validator = jsonschema.validate(req.body, userUpdateSchema);
     if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
+      const errs = validator.errors.map((e) => e.stack);
       throw new BadRequestError(errs);
     }
 
@@ -109,7 +114,6 @@ router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
   }
 });
 
-
 /** DELETE /[username]  =>  { deleted: username }
  *
  * Authorization required: login
@@ -117,7 +121,10 @@ router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
 
 router.delete("/:username", ensureLoggedIn, async function (req, res, next) {
   try {
-    if (!res.locals.user.isAdmin && res.locals.user.username !== req.params.username) {
+    if (
+      !res.locals.user.isAdmin &&
+      res.locals.user.username !== req.params.username
+    ) {
       throw new ExpressError("Only that user or admin can edit a user.", 401);
     }
     await User.remove(req.params.username);
@@ -127,5 +134,24 @@ router.delete("/:username", ensureLoggedIn, async function (req, res, next) {
   }
 });
 
+router.post(
+  "/:username/jobs/:id",
+  ensureLoggedIn,
+  async function (req, res, next) {
+    try {
+      if (
+        !res.locals.user.isAdmin &&
+        res.locals.user.username !== req.params.username
+      ) {
+        throw new ExpressError("Only that user or admin can edit a user.", 401);
+      }
+      const { username, id } = req.params;
+      const applied = await User.apply(username, id);
+      return res.json(applied);
+    } catch (err) {
+      return next(err);
+    }
+  }
+);
 
 module.exports = router;

@@ -36,13 +36,13 @@ class Job {
 
   /** Find all jobs.
    *
-   * Returns [{ title, salary, equity, companyHandle }, ...]
+   * Returns [{ id, title, salary, equity, companyHandle }, ...]
    * */
 
   static async findAll(filters = false) {
     if (Object.keys(filters).length === 0) {
       const jobsRes = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle"
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle"
            FROM jobs
            ORDER BY title`
       );
@@ -50,7 +50,7 @@ class Job {
     } else {
       const whereClause = sqlForJobQueryFilters(filters);
       const jobsRes = await db.query(
-        `SELECT title, salary, equity, company_handle AS "companyHandle"
+        `SELECT id, title, salary, equity, company_handle AS "companyHandle"
          FROM jobs
          WHERE ${whereClause}
          ORDER BY title`

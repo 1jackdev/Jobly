@@ -7,6 +7,7 @@ const {
 } = require("../expressError");
 const db = require("../db.js");
 const User = require("./user.js");
+const Job = require("./job.js");
 const {
   commonBeforeAll,
   commonBeforeEach,
@@ -138,8 +139,8 @@ describe("get", function () {
       username: "u1",
       firstName: "U1F",
       lastName: "U1L",
-      email: "u1@email.com",
       isAdmin: false,
+      jobs: [],
     });
   });
 
@@ -164,18 +165,18 @@ describe("update", function () {
   };
 
   test("works", async function () {
-    let job = await User.update("u1", updateData);
-    expect(job).toEqual({
+    let user = await User.update("u1", updateData);
+    expect(user).toEqual({
       username: "u1",
       ...updateData,
     });
   });
 
   test("works: set password", async function () {
-    let job = await User.update("u1", {
+    let user = await User.update("u1", {
       password: "new",
     });
-    expect(job).toEqual({
+    expect(user).toEqual({
       username: "u1",
       firstName: "U1F",
       lastName: "U1L",
@@ -214,8 +215,7 @@ describe("update", function () {
 describe("remove", function () {
   test("works", async function () {
     await User.remove("u1");
-    const res = await db.query(
-        "SELECT * FROM users WHERE username='u1'");
+    const res = await db.query("SELECT * FROM users WHERE username='u1'");
     expect(res.rows.length).toEqual(0);
   });
 
@@ -227,4 +227,28 @@ describe("remove", function () {
       expect(err instanceof NotFoundError).toBeTruthy();
     }
   });
+});
+
+/************************************** apply */
+describe("apply", () => {
+  // test("works", async () => {
+  //   const newJob = await Job.create({
+  //     title: "gardener",
+  //     salary: 25000,
+  //     equity: 0.1,
+  //     companyHandle: "c1",
+  //   });
+  //   const application = await User.apply("u1", newJob.id);
+  //   expect(application.applied).toBe(newJob.id);
+  // });
+  test("key error if no such user", async function () {
+    try {
+      await User.apply("nope", 2);
+      fail();
+    } catch (err) {
+      // key not present in table
+      expect(err.code).toBe("23503");
+    }
+  });
+
 });
