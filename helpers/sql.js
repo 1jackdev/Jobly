@@ -1,6 +1,7 @@
 const { BadRequestError, ExpressError } = require("../expressError");
 
-const filterCodes = ["name", "minEmployees", "maxEmployees"];
+const companyFilterCodes = ["name", "minEmployees", "maxEmployees"];
+const jobFilterCodes = ["title", "minSalary", "hasEquity"];
 /** If supplied with data, converts the data format
   from an object to a sql-friendly array.
   accepts a second arg jsToSql which should look similar 
@@ -32,10 +33,10 @@ function sqlForPartialUpdate(dataToUpdate, jsToSql) {
   Throws an error if a filter is invalid.
  */
 
-function sqlForQueryFilters(filters) {
+function sqlForCompanyQueryFilters(filters) {
   const keys = Object.keys(filters);
   for (key of keys) {
-    if (filterCodes.indexOf(key) === -1) {
+    if (companyFilterCodes.indexOf(key) === -1) {
       throw new ExpressError(`Invalid Filter ${key}`, 500);
     }
   }
@@ -73,16 +74,63 @@ function sqlForQueryFilters(filters) {
   }
 }
 
+/** Takes in an object of filters, returns a string 
+  containing a formatted WHERE clause.
+  EX: filters = {title: "pro", salary=40000}
+  
+  >>> LOWER(title) LIKE '%pro%' AND salary > 40000
+  Throws an error if a filter is invalid.
+ */
+
+function sqlForJobQueryFilters(filters) {
+  const keys = Object.keys(filters);
+  for (key of keys) {
+    if (jobFilterCodes.indexOf(key) === -1) {
+      throw new ExpressError(`Invalid Filter ${key}`, 500);
+    }
+  }
+  // just one filter
+  let whereClause = "";
+  if (keys.length === 1) {
+    if (keys[0] === "title") {
+      whereClause += `LOWER(title) LIKE '%${filters.title.toLowerCase()}%'`;
+    } else if (keys[0] === "minSalary") {
+      whereClause += `salary >= ${filters.minSalary}`;
+    } else if (keys[0] === "hasEquity") {
+      whereClause += `equity > 0`;
+    }
+    return whereClause;
+  } else {
+    // mulitple filters
+    let clauses = [];
+    for (let key of keys) {
+      if (key === "title") {
+        titleClause = ` LOWER(title) LIKE '%${filters.title.toLowerCase()}%'`;
+        clauses.push(titleClause);
+      } else if (key === "minSalary") {
+        minClause = ` salary >= ${filters.minSalary}`;
+        clauses.push(minClause);
+      } else if (key === "hasEquity") {
+        equityClause = ` equity > 0`;
+        clauses.push(equityClause);
+      }
+    }
+    // add each filter to the whereClause
+    whereClause = concatClauses(clauses);
+
+    return whereClause;
+  }
+}
+
 /** Makes sure that the min filter 
   is smaller than max filter, and that they are not equal.
   */
 function minMaxEmployeesCheck(filters) {
   if (!filters.minEmployees && filters.maxEmployees) {
     return;
-  } else if (filters.minEmployees === filters.maxEmployees){
+  } else if (filters.minEmployees === filters.maxEmployees) {
     throw new ExpressError("Max and min can not be equal.", 400);
-  }
-   else {
+  } else {
     if (filters.minEmployees > filters.maxEmployees)
       throw new ExpressError("Max must be greater than min.", 400);
   }
@@ -102,4 +150,8 @@ function concatClauses(clauses) {
   return whereClause;
 }
 
-module.exports = { sqlForPartialUpdate, sqlForQueryFilters };
+module.exports = {
+  sqlForPartialUpdate,
+  sqlForCompanyQueryFilters,
+  sqlForJobQueryFilters,
+};

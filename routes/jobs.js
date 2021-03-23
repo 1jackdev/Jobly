@@ -51,8 +51,10 @@ router.post("/", ensureLoggedIn, requireAdmin, async function (req, res, next) {
 
 router.get("/", async function (req, res, next) {
   try {
-    // const filters = req.query;
-    const jobs = await Job.findAll();
+    const filters = req.query;
+    if (filters.hasEquity && filters.hasEquity !== "true")
+      delete filters.hasEquity;
+    const jobs = await Job.findAll(filters);
     return res.json({ jobs });
   } catch (err) {
     return next(err);

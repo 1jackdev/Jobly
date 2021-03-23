@@ -2,7 +2,7 @@
 
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate, sqlForQueryFilters } = require("../helpers/sql");
+const { sqlForPartialUpdate, sqlForCompanyQueryFilters } = require("../helpers/sql");
 
 /** Related functions for companies. */
 
@@ -57,7 +57,7 @@ class Company {
       );
       return companiesRes.rows;
     } else {
-      const whereClause = sqlForQueryFilters(filters);
+      const whereClause = sqlForCompanyQueryFilters(filters);
       const companiesRes = await db.query(
         `SELECT handle,
                 name,

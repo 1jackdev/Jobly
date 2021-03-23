@@ -1,5 +1,9 @@
 const { BadRequestError } = require("../expressError");
-const { sqlForPartialUpdate, sqlForQueryFilters } = require("./sql");
+const {
+  sqlForPartialUpdate,
+  sqlForCompanyQueryFilters,
+  sqlForJobQueryFilters,
+} = require("./sql");
 
 describe("turn input into sql-friendly update string", () => {
   // update query tests
@@ -33,16 +37,16 @@ describe("turn input into sql-friendly update string", () => {
   });
 });
 
-describe("turn input into sql-friendly where string", () => {
-  // filter query tests
+describe("turn input into sql-friendly company where string", () => {
+  // company filter query tests
   test("should handle 1 filter", () => {
     const input = { name: "bro" };
-    const results = sqlForQueryFilters(input);
+    const results = sqlForCompanyQueryFilters(input);
     expect(results).toContain("LOWER(name) LIKE '%bro%'");
   });
   test("should handle mulitple filters", () => {
     const input = { name: "bro", minEmployees: 100 };
-    const results = sqlForQueryFilters(input);
+    const results = sqlForCompanyQueryFilters(input);
     expect(results).toContain(
       "LOWER(name) LIKE '%bro%' AND num_employees > 100"
     );
@@ -50,7 +54,7 @@ describe("turn input into sql-friendly where string", () => {
   test("should handle bad filters", () => {
     const input = { potatoes: 50, minEmployees: 100 };
     try {
-      const results = sqlForQueryFilters(input);
+      const results = sqlForCompanyQueryFilters(input);
     } catch (err) {
       expect(err.message).toContain("Invalid Filter potatoes");
     }
@@ -59,7 +63,7 @@ describe("turn input into sql-friendly where string", () => {
   test("should throw error if min > max", () => {
     const input = { maxEmployees: 50, minEmployees: 100 };
     try {
-      const results = sqlForQueryFilters(input);
+      const results = sqlForCompanyQueryFilters(input);
     } catch (err) {
       expect(err.message).toContain("Max must be greater than min.");
     }
@@ -67,9 +71,42 @@ describe("turn input into sql-friendly where string", () => {
   test("should throw error if min = max", () => {
     const input = { maxEmployees: 50, minEmployees: 50 };
     try {
-      const results = sqlForQueryFilters(input);
+      const results = sqlForCompanyQueryFilters(input);
     } catch (err) {
       expect(err.message).toContain("Max and min can not be equal.");
+    }
+  });
+});
+
+describe("turn input into sql-friendly job where string", () => {
+  // job filter query tests
+  test("should handle 1 filter", () => {
+    const input = { title: "bro" };
+    const results = sqlForJobQueryFilters(input);
+    expect(results).toContain("LOWER(title) LIKE '%bro%'");
+  });
+  test("should handle mulitple filters", () => {
+    const input = { title: "bro", minSalary: 10000 };
+    const results = sqlForJobQueryFilters(input);
+    expect(results).toContain("LOWER(title) LIKE '%bro%' AND salary >= 10000");
+  });
+  test("should handle bad filters", () => {
+    const input = { potatoes: 50 };
+    try {
+      const results = sqlForJobQueryFilters(input);
+    } catch (err) {
+      expect(err.message).toContain("Invalid Filter potatoes");
+    }
+  });
+
+  test("should throw error if minSalary is a string", () => {
+    const input = { minSalary: "true" };
+    try {
+      const results = sqlForJobQueryFilters(input);
+    } catch (err) {
+      expect(err.message).toContain(
+        "operator does not exist: integer >= boolean"
+      );
     }
   });
 });
