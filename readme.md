@@ -29,7 +29,7 @@ Once started, use an API testing tool like Postman, Insomnia, etc.
 
 ## Features
 
-register a user (returns a token):
+register - this is where users sign up (returns a token):
 
 auth/register
 
@@ -39,8 +39,7 @@ auth/register
 "password": "new_password",
 "firstName": "new_first",
 "lastName": "new_last",
-"email": "new@newuser.com",
-"isAdmin": "true",
+"email": "new@newuser.com"
 }
 ```
 \
