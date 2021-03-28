@@ -113,9 +113,9 @@ class Company {
     if (c.id !== null) {
       jobs = companyRes.rows.map((job) => ({
         id: job.id,
+        title: job.title,
         salary: job.salary,
         equity: job.equity,
-        companyHandle: job.companyHandle,
       }));
     }
 
