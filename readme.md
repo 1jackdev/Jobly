@@ -49,7 +49,7 @@ auth/token
 ```JSON
 {
 "username": "u1",
-"password": "pwd1",
+"password": "pwd1"
 }
 ```
 \
